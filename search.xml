@@ -17,4 +17,10 @@
 <p><img src="/pic/OIP.jpg" alt="img"><br>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
 ]]></content>
   </entry>
+  <entry>
+    <title>test</title>
+    <url>/2023/12/15/test/</url>
+    <content><![CDATA[<p><img src="/test/a.jpg" alt="img"></p>
+]]></content>
+  </entry>
 </search>
