@@ -5,4 +5,75 @@
     <url>/2023/12/15/Hello/</url>
     <content><![CDATA[]]></content>
   </entry>
+  <entry>
+    <title>Win11下控制台读取鼠标操作</title>
+    <url>/2023/12/16/Win11%E4%B8%8B%E6%8E%A7%E5%88%B6%E5%8F%B0%E8%AF%BB%E5%8F%96%E9%BC%A0%E6%A0%87%E6%93%8D%E4%BD%9C/</url>
+    <content><![CDATA[<h1 id="控制台函数读取事件"><a href="#控制台函数读取事件" class="headerlink" title="控制台函数读取事件"></a>控制台函数读取事件</h1><p>需要引入Windows.h<br>要从控制台获取鼠标事件需要使用ReadConsoleInput()函数;<br>语法格式如下</p>
+<blockquote>
+<p>BOOL WINAPI ReadConsoleInput(<br> <em>In</em>  HANDLE        hConsoleInput,<br> <em>Out</em> PINPUT_RECORD lpBuffer,<br> <em>In</em>  DWORD         nLength,<br> <em>Out</em> LPDWORD       lpNumberOfEventsRead<br>);</p>
+</blockquote>
+<p><strong>第一个参数为控制台输入缓冲句柄,标识从哪个控制台缓冲区读取事件,必须具有GENERIC_READ权限</strong></p>
+<span id="more"></span>
+<p><strong>第二个参数为指向类型INPUT_RECORD结构数组的变量</strong></p>
+<blockquote>
+<p>INPUT_RECORD结构中的内容</p>
+<blockquote>
+<p>typedef struct _INPUT_RECORD {<br> WORD  EventType;<br> union {<br>   KEY_EVENT_RECORD          KeyEvent;<br>   MOUSE_EVENT_RECORD        MouseEvent;<br>   WINDOW_BUFFER_SIZE_RECORD WindowBufferSizeEvent;<br>   MENU_EVENT_RECORD         MenuEvent;<br>   FOCUS_EVENT_RECORD        FocusEvent;<br> } Event;<br>} INPUT_RECORD;</p>
+</blockquote>
+<p>第一个WORD类型的EventType中记录事件的类型.</p>
+</blockquote>
+<p><strong>第三个参数为数组大小,使用时设置为1即可;</strong></p>
+<p><strong>第四个参数为指向接收读取输入记录数量的变量</strong></p>
+<h1 id="使用获取的事件"><a href="#使用获取的事件" class="headerlink" title="使用获取的事件"></a>使用获取的事件</h1><p>获取的事件储存在INPUT_RECORD类型的变量中.获取鼠标事件后,这个结构中的EventType变为MOUSE_Event,使用成员运算符即可获取EventType中的数据,再结合if语句判断是否为鼠标事件.假设该变量名为Record<br><code>if(Record.EventType==MOUSE_Event)</code></p>
+<p>判断为鼠标事件后即可读取鼠标事件中的数据.储存鼠标事件的结构为</p>
+<blockquote>
+<pre><code>  typedef struct _MOUSE_EVENT_RECORD &#123;
+   COORD dwMousePosition;
+  DWORD dwButtonState;
+ DWORD dwControlKeyState;
+   DWORD dwEventFlags;
+   &#125; MOUSE_EVENT_RECORD;
+</code></pre>
+</blockquote>
+<ul>
+<li>dwMousePosition为COORD类型,储存鼠标的位置</li>
+<li>dwButtonState为DWORD类型,储存鼠标按钮的状态,可为以下值之一:<blockquote>
+<p>FROM_LEFT_1ST_BUTTON_PRESSED 0x0001 	最左侧的鼠标按钮。<br>FROM_LEFT_2ND_BUTTON_PRESSED 0x0004    左侧的第二个按钮。<br>FROM_LEFT_3RD_BUTTON_PRESSED 0x0008    左侧的第三个按钮。<br>FROM_LEFT_4TH_BUTTON_PRESSED 0x0010    左侧的第四个按钮。<br>RIGHTMOST_BUTTON_PRESSED 0x0002	    最右侧的鼠标按钮。</p>
+</blockquote>
+</li>
+<li>dwEventFlag储存鼠标事件的类型.若此值为零则表示按下或松开鼠标按键,反之则为以下值之:<blockquote>
+<p>DOUBLE_CLICK 0x0002</p>
+<blockquote>
+<p>所发生的双击操作的第二次单击（按钮按下）.第一次单击将作为常规按钮按下事件返回。</p>
+</blockquote>
+<p>MOUSE_HWHEELED 0x0008</p>
+<blockquote>
+<p>水平鼠标滚轮已移动。<br> 如果 dwButtonState 成员的高字包含正值，则滚轮向右旋转。 否则，滚轮向左旋转。</p>
+</blockquote>
+<p>MOUSE_MOVED 0x0001	</p>
+<blockquote>
+<p>发生了鼠标位置更改。</p>
+</blockquote>
+<p>MOUSE_WHEELED 0x0004	</p>
+<blockquote>
+<p>垂直鼠标滚轮已移动。<br>如果 dwButtonState 成员的高字包含正值，则滚轮向前旋转，远离用户。 否则，滚轮向后旋转，接近用户。</p>
+</blockquote>
+</blockquote>
+</li>
+</ul>
+<p>再次使用if语句判断鼠标事件的类型即可<br><code>if(Record.MouseEvent.dwButtonState==FROM_LEFT_1ST_BUTTON_PRESSED)</code></p>
+<h1 id="Win11下需要的另外工作"><a href="#Win11下需要的另外工作" class="headerlink" title="Win11下需要的另外工作"></a>Win11下需要的另外工作</h1><p>由于微软在Win10引入了控制台的快速编辑模式,导致win10及更高的操作系统直接用ReadConsoleInput()函数时无法获取操作,所以需要手动关闭快速编辑模式.一种方法时每次打开控制台时从设置这种关闭快速操作,另一种为使用代码修改.显然第二种更胜一筹.<br>修改控制台模式使用的函数为SetConsoleMode();<br>该函数接受两个参数,第一个参数为控制台缓冲区输入句柄,第二个为DWORD类型的变量,储存模式;<br>在使用该函数之前需要先使用GetConsoleMode()获取当前的控制台模式,该函数参数与SetConsoleMode()一致,但第二个参数为指针传递.<br>获取控制台模式后,用如下代码移除快速编辑</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><code class="hljs c++">mode &amp;= ~ENABLE_QUICK_EDIT_MODE;	<span class="hljs-comment">//设置模式属性</span><br>mode &amp;= ~ENABLE_INSERT_MODE;	<span class="hljs-comment">//因为win10引入了控制台快速编辑模式，会影响控制台缓冲区的输入，所以需要关闭快速编辑模式，每次使用都需要关闭</span><br>mode |= ENABLE_MOUSE_INPUT;<br></code></pre></td></tr></table></figure>
+<p>然后使用SetConsoleMode()函数即可</p>
+<h1 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h1><figure class="highlight c++"><table><tr><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span><span class="hljs-string">&lt;Windows.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span><span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>    DWORD res=<span class="hljs-number">0</span>;<br>    DWORD mode;<br>    INPUT_RECORD a;<br>    HANDLE hIn=<span class="hljs-built_in">GetStdHandle</span>(STD_INPUT_HANDLE);<br>    <span class="hljs-built_in">GetConsoleMode</span>(hIn,&amp;mode);<br>    mode &amp;= ~ENABLE_QUICK_EDIT_MODE;	<span class="hljs-comment">//设置模式属性</span><br>    mode &amp;= ~ENABLE_INSERT_MODE;	<span class="hljs-comment">//因为win10引入了控制台快速编辑模式，会影响控制台缓冲区的输入，所以需要关闭快速编辑模式，每次使用都需要</span><br>    mode |= ENABLE_MOUSE_INPUT;<br>    <span class="hljs-built_in">SetConsoleMode</span>(hIn,mode);<br>    <span class="hljs-keyword">while</span>(<span class="hljs-number">1</span>)<br>    &#123;<br>        <br>        <span class="hljs-built_in">ReadConsoleInput</span>(hIn,&amp;a,<span class="hljs-number">1</span>,&amp;res);<br>        <span class="hljs-keyword">if</span> (a.Event.MouseEvent.dwEventFlags == MOUSE_MOVED) <span class="hljs-comment">//Mouse Moved</span><br>        &#123;<br>            std::cout&lt;&lt;<span class="hljs-string">&quot;Mouse Moved&quot;</span>&lt;&lt;std::endl;<br>        &#125;<br>    &#125;<br>    <br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="如有错误敬请指正，个人邮箱-x73-x65-97-x77-x6f-x6e-64-112-101-x74-97-108-x6d-x61-105-x6c-46-x63-x6f-x6d"><a href="#如有错误敬请指正，个人邮箱-x73-x65-97-x77-x6f-x6e-64-112-101-x74-97-108-x6d-x61-105-x6c-46-x63-x6f-x6d" class="headerlink" title="如有错误敬请指正，个人邮箱&#x73;&#x65;&#97;&#x77;&#x6f;&#x6e;&#64;&#112;&#101;&#x74;&#97;&#108;&#x6d;&#x61;&#105;&#x6c;&#46;&#x63;&#x6f;&#x6d;"></a>如有错误敬请指正，个人邮箱<a href="mailto:&#x73;&#x65;&#97;&#x77;&#x6f;&#x6e;&#64;&#112;&#101;&#x74;&#97;&#108;&#x6d;&#x61;&#105;&#x6c;&#46;&#x63;&#x6f;&#x6d;">&#x73;&#x65;&#97;&#x77;&#x6f;&#x6e;&#64;&#112;&#101;&#x74;&#97;&#108;&#x6d;&#x61;&#105;&#x6c;&#46;&#x63;&#x6f;&#x6d;</a></h3>]]></content>
+      <categories>
+        <category>c++</category>
+      </categories>
+      <tags>
+        <tag>控制台</tag>
+        <tag>c++</tag>
+      </tags>
+  </entry>
 </search>
