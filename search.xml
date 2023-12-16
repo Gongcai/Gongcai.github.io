@@ -58,7 +58,7 @@
 <p>比较简单，不细讲了</p>
 <h1 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h1><figure class="highlight plaintext"><table><tr><td class="code"><pre><code class="hljs plaintext">#include&lt;Windows.h&gt;<br>#include&lt;iostream&gt;<br>int main()<br>&#123;<br>    DWORD res = 0;<br>    DWORD mode;<br>    INPUT_RECORD a;<br>    HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);<br>    GetConsoleMode(hIn, &amp; mode);<br>    mode &amp;= ~ENABLE_QUICK_EDIT_MODE;	//设置模式属性<br>    mode &amp;= ~ENABLE_INSERT_MODE;	//因为win10引入了控制台快速编辑模式，会影响控制台缓冲区的输入，所以需要关闭快速编辑模式，每次使用都需要<br>    mode |= ENABLE_MOUSE_INPUT;<br>    SetConsoleMode(hIn, mode);<br>    while (1)<br>    &#123;<br>        <br>        ReadConsoleInput(hIn, &amp;a, 1, &amp;res);<br>        if (a.Event.MouseEvent.dwEventFlags == MOUSE_MOVED) //Mouse Moved<br>        &#123;<br>            std::cout &lt;&lt; &quot;Mouse Moved&quot; &lt;&lt; std::endl;<br>        &#125;<br>    &#125;<br><br>&#125;<br></code></pre></td></tr></table></figure>
 
-<p>若有错误，敬请指出<a href="mailto:&#115;&#101;&#x61;&#x77;&#x6f;&#x6e;&#64;&#112;&#101;&#116;&#x61;&#x6c;&#109;&#97;&#105;&#108;&#46;&#x63;&#111;&#x6d;">&#115;&#101;&#x61;&#x77;&#x6f;&#x6e;&#64;&#112;&#101;&#116;&#x61;&#x6c;&#109;&#97;&#105;&#108;&#46;&#x63;&#111;&#x6d;</a></p>
+<p>如有错误，敬请指出<a href="mailto:&#115;&#x65;&#x61;&#119;&#x6f;&#110;&#x40;&#x70;&#x65;&#x74;&#x61;&#x6c;&#109;&#97;&#105;&#x6c;&#x2e;&#x63;&#x6f;&#109;">&#115;&#x65;&#x61;&#119;&#x6f;&#110;&#x40;&#x70;&#x65;&#x74;&#x61;&#x6c;&#109;&#97;&#105;&#x6c;&#x2e;&#x63;&#x6f;&#109;</a></p>
 ]]></content>
       <categories>
         <category>C++</category>
