@@ -8,6 +8,61 @@
   <entry>
     <title>Win11下控制台读取鼠标操作</title>
     <url>/2023/12/16/Win11%E4%B8%8B%E6%8E%A7%E5%88%B6%E5%8F%B0%E8%AF%BB%E5%8F%96%E9%BC%A0%E6%A0%87%E6%93%8D%E4%BD%9C/</url>
-    <content><![CDATA[]]></content>
+    <content><![CDATA[<h1 id="控制台函数读取事件"><a href="#控制台函数读取事件" class="headerlink" title="控制台函数读取事件"></a>控制台函数读取事件</h1><h2 id="需要引入Windows-h"><a href="#需要引入Windows-h" class="headerlink" title="需要引入Windows.h"></a>需要引入Windows.h</h2><span id="more"></span>
+<h3 id="要从控制台获取鼠标事件需要使用ReadConsoleInput-函数"><a href="#要从控制台获取鼠标事件需要使用ReadConsoleInput-函数" class="headerlink" title="要从控制台获取鼠标事件需要使用ReadConsoleInput()函数;"></a>要从控制台获取鼠标事件需要使用ReadConsoleInput()函数;</h3><p>语法格式如下</p>
+<blockquote>
+<p>BOOL WINAPI ReadConsoleInput(<br>In  HANDLE        hConsoleInput,<br>Out PINPUT_RECORD lpBuffer,<br>In  DWORD         nLength,<br>Out LPDWORD       lpNumberOfEventsRead<br>);</p>
+</blockquote>
+<ul>
+<li>第一个参数为控制台输入缓冲句柄,标识从哪个控制台缓冲区读取事件,必须具有GENERIC_READ权限</li>
+<li>第二个参数为指向INPUT_RECORD结构的指针，记录输入时间</li>
+<li>第三个为储存读取长度的变量</li>
+<li>第四个为指向读取数量的变量的指针</li>
+</ul>
+<h3 id="需要操作的为第二个INPUT-RECORD结构"><a href="#需要操作的为第二个INPUT-RECORD结构" class="headerlink" title="需要操作的为第二个INPUT_RECORD结构**"></a>需要操作的为第二个INPUT_RECORD结构**</h3>  <figure class="highlight plaintext"><table><tr><td class="code"><pre><code class="hljs plaintext">typedef struct _INPUT_RECORD &#123;<br>WORD  EventType;<br>union &#123;<br>    KEY_EVENT_RECORD          KeyEvent;<br>    MOUSE_EVENT_RECORD        MouseEvent;<br>    WINDOW_BUFFER_SIZE_RECORD WindowBufferSizeEvent;<br>    MENU_EVENT_RECORD         MenuEvent;<br>    FOCUS_EVENT_RECORD        FocusEvent;<br>    &#125; Event;<br>&#125; INPUT_RECORD;<br><br></code></pre></td></tr></table></figure>
+<blockquote>
+<p><em>EventType  输入事件类型的句柄和存储在事件成员中的事件记录。</em><br>此成员可以是以下值之一。</p>
+<blockquote>
+<p>FOCUS_EVENT 0x0010<br>KEY_EVENT 0x0001	<br>MENU_EVENT 0x0008	<br>MOUSE_EVENT 0x0002	<br>WINDOW_BUFFER_SIZE_EVENT 0x0004	</p>
+</blockquote>
+</blockquote>
+<h3 id="判断输入事件类型和鼠标事件类型"><a href="#判断输入事件类型和鼠标事件类型" class="headerlink" title="判断输入事件类型和鼠标事件类型"></a>判断输入事件类型和鼠标事件类型</h3><p>使用成员运算符即可访问各个数据，用if语句判断EventType为MOUSE_EVENT后即可对鼠标事件分析（<strong>当然也可以直接分析</strong>）<br>鼠标输入为MOUSE_EVENT_RECORD结构</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><code class="hljs plaintext">typedef struct _MOUSE_EVENT_RECORD &#123;<br>COORD dwMousePosition;<br>DWORD dwButtonState;<br>DWORD dwControlKeyState;<br>DWORD dwEventFlags;<br>&#125; MOUSE_EVENT_RECORD;<br></code></pre></td></tr></table></figure>
+<blockquote>
+<p>dwMousePosition</p>
+<blockquote>
+<p>包含游标位置的 COORD 结构，以控制台屏幕缓冲区的字符单元坐标为单位。</p>
+</blockquote>
+<p>dwButtonState</p>
+<blockquote>
+<p>鼠标按钮的状态。 最小有效位对应于最左侧的鼠标按钮。 下一个最小有效位对应于最右侧的鼠标按钮。 下一位表示左侧第二个鼠标按钮。 接下来的位从左到右与鼠标按钮对应。 如果按下了按钮，则位为 1。</p>
+<blockquote>
+<p>FROM_LEFT_1ST_BUTTON_PRESSED 0x0001	最左侧的鼠标按钮。<br>FROM_LEFT_2ND_BUTTON_PRESSED 0x0004	左侧的第二个按钮。<br>FROM_LEFT_3RD_BUTTON_PRESSED 0x0008	左侧的第三个按钮。<br>FROM_LEFT_4TH_BUTTON_PRESSED 0x0010	左侧的第四个按钮。<br>RIGHTMOST_BUTTON_PRESSED 0x0002	最右侧的鼠标按钮。</p>
+</blockquote>
+</blockquote>
+<p>dwEventFlags<br>鼠标事件的类型。 如果此值为零，则表示按下或释放了鼠标按钮。 否则，此成员是以下值之一。</p>
+<blockquote>
+<p>DOUBLE_CLICK 0x0002	      双击<br>MOUSE_HWHEELED 0x0008 </p>
+<blockquote>
+<p>水平鼠标滚轮移动<br>如果dwButtonState成员的高字包含正值，则滚轮向右旋转。否则，滚轮向左旋转。</p>
+</blockquote>
+<p>MOUSE_MOVED 0x0001	     鼠标移动<br>MOUSE_WHEELED 0x0004</p>
+<blockquote>
+<p>垂直鼠标滚轮已移动<br>如果 dwButtonState 成员的高字包含正值，则滚轮向前旋转，远离用户。 否则，滚轮向后旋转，接近用户。</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>同样可使用成员运算符进行访问</p>
+<h1 id="在Win11需要做的工作"><a href="#在Win11需要做的工作" class="headerlink" title="在Win11需要做的工作"></a>在Win11需要做的工作</h1><p>由于微软在win10上引入了快速编辑，导致无法直接获取操作事件，所以需要先关闭快速编辑<br>可以手动在设置里关闭，也可以通过程序关闭<br>这里需要用到GetConsoleMode()函数先获取当前控制台模式，再把当前的控制台模式修改，再通过SetConsoleMode()函数修改模式<br>可通过以下代码修改</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><code class="hljs plaintext">HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);<br>GetConsoleMode(hIn, &amp; mode);<br>mode &amp;= ~ENABLE_QUICK_EDIT_MODE;	//设置模式属性<br>mode &amp;= ~ENABLE_INSERT_MODE;	//因为win10引入了控制台快速编辑模式，会影响控制台缓冲区的输入，所以需要关闭快速编辑模式，每次使用都需要<br>mode |= ENABLE_MOUSE_INPUT;<br>SetConsoleMode(hIn, mode);<br></code></pre></td></tr></table></figure>
+<p>比较简单，不细讲了</p>
+<h1 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h1><figure class="highlight plaintext"><table><tr><td class="code"><pre><code class="hljs plaintext">#include&lt;Windows.h&gt;<br>#include&lt;iostream&gt;<br>int main()<br>&#123;<br>    DWORD res = 0;<br>    DWORD mode;<br>    INPUT_RECORD a;<br>    HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);<br>    GetConsoleMode(hIn, &amp; mode);<br>    mode &amp;= ~ENABLE_QUICK_EDIT_MODE;	//设置模式属性<br>    mode &amp;= ~ENABLE_INSERT_MODE;	//因为win10引入了控制台快速编辑模式，会影响控制台缓冲区的输入，所以需要关闭快速编辑模式，每次使用都需要<br>    mode |= ENABLE_MOUSE_INPUT;<br>    SetConsoleMode(hIn, mode);<br>    while (1)<br>    &#123;<br>        <br>        ReadConsoleInput(hIn, &amp;a, 1, &amp;res);<br>        if (a.Event.MouseEvent.dwEventFlags == MOUSE_MOVED) //Mouse Moved<br>        &#123;<br>            std::cout &lt;&lt; &quot;Mouse Moved&quot; &lt;&lt; std::endl;<br>        &#125;<br>    &#125;<br><br>&#125;<br></code></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>C++</category>
+      </categories>
+      <tags>
+        <tag>C++</tag>
+        <tag>Console</tag>
+      </tags>
   </entry>
 </search>
